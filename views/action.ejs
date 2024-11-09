@@ -232,7 +232,7 @@
         </div>
     </div>
 
-    <div id="notification" class="notification" style="display: none;"></div>
+    <%- include('partials/footer') %>
     <script src="../public/js/modules/jquery-3.6.0.min.js"></script>
     <script src="../public/js/modules/duplicate.js"></script>
     <script>
@@ -266,15 +266,14 @@
 
         async function loadModules() {
             try {
-                window.api.loadModules();
-                window.apiReceive.receiveModules(async (event, modules) => {
-                    const loadPromises = [];
+                const module = await window.api.loadComponent("modules")
+                const loadPromises = [];
 
-                    if (modules.discord) {
+                if (module.discord) {
                         loadPromises.push(loadModule('discord'));
                     }
 
-                    $.each(modules, (moduleName, isActive) => {
+                    $.each(module, (moduleName, isActive) => {
                         if (isActive && moduleName !== 'discord') {
                             loadPromises.push(loadModule(moduleName));
                         }
@@ -283,7 +282,6 @@
                     await Promise.all(loadPromises);
 
                     await addScriptOnce('../public/js/action.js');
-                });
             } catch (error) {
                 console.error('Erreur de chargement des modules:', error);
             }

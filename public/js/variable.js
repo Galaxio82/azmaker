@@ -1,7 +1,7 @@
 let isEditMode = false;
 
 async function loadVariables() {
-    const variables = await window.api.loadVariables();
+    const variables = await window.api.loadComponent("variables");
     const variablesContainer = document.getElementById('variables-container');
     variablesContainer.innerHTML = '';
 

@@ -3,7 +3,7 @@ $('.type').val('guildCreate');
 let currentNumberEventId;
 
 async function loadEvents() {
-    const events = await window.api.loadEvents();
+    const events = await window.api.loadComponent("events");
     const eventsContainer = $('#events-container');
     eventsContainer.empty();
 
@@ -127,13 +127,27 @@ function addEvent() {
 
     if (eventName && eventType && actions.length > 0) {
         if(isEditMode) {
-            const event = { id: currentNumberEventId, eventName, eventType, actions };
-            window.api.editEvent(event);
-            showNotification("Évènement modifié avec succès")
+            const events = { id: currentNumberEventId, eventName, eventType, actions };
+            window.api.actionComponent({ action: "edit", component: "events", events })
+            .then((response) => {
+                console.log(response)
+                if(response.success) {
+                    showNotification("Évènement modifié avec succès !");
+                } else {
+                    showNotification(response.message, true);
+                }
+            })
         } else {
-            const event = { id: currentNumberEventId, eventName, eventType, actions };
-            window.api.saveEvent(event);
-            showNotification("Évènement créé avec succès")
+            const events = { id: currentNumberEventId, eventName, eventType, actions };
+            window.api.actionComponent({ action: "save", component: "events", events })            
+            .then((response) => {
+                console.log(response)
+                if(response.success) {
+                    showNotification("Évènement crée avec succès !");
+                } else {
+                    showNotification(response.message, true);
+                }
+            })
         }
 
         loadEvents();
@@ -186,9 +200,16 @@ function editEvent(evt, eventId) {
 }
 
 function deleteEvent() {
-    window.api.deleteEvent(currentEventId);
+    window.api.actionComponent({ action: "delete", component: "events", id: currentEventId })
+    .then((response) => {
+        console.log(response)
+        if(response.success) {
+            showNotification("Évènement supprimé avec succès !");
+        } else {
+            showNotification(response.message, true);
+        }
+    })
     cancelEdit()
-    showNotification("Évènement supprimé avec succès !");
 }
 
 function cancelEdit() { 

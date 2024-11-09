@@ -1,141 +1,14 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html class="page-splash" lang="fr">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../public/css/styles.css">
     <title>AzMaker</title>
-    <style>
-        body,
-        html {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #282c34;
-            color: #ffffff;
-            font-family: Arial, sans-serif;
-            overflow: hidden;
-            user-select: none;
-        }
-
-        .window {
-            width: 530px;
-            height: 600px;
-            background-color: #333;
-            border-radius: 8px;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            position: relative;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-        }
-
-        .title-bar {
-            width: 100%;
-            height: 30px;
-            background-color: #444;
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            -webkit-app-region: drag;
-        }
-
-        .close-btn {
-            margin-right: 10px;
-            background-color: transparent;
-            border: none;
-            color: #76c7c0;
-            font-size: 18px;
-            cursor: pointer;
-            -webkit-app-region: no-drag;
-        }
-
-        .splash-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-            text-align: center;
-        }
-
-        .logo img {
-            width: 150px;
-            height: 150px;
-            border-radius: 50%;
-            object-fit: cover;
-            margin-bottom: 30px;
-        }
-
-        .loading-message {
-            font-size: 18px;
-            font-weight: bold;
-            color: #ffffff;
-            text-shadow: 0 1px 5px rgba(255, 255, 255, 0.6);
-        }
-
-        .auth-container {
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
-            height: 100%;
-        }
-
-        .auth-form {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .auth-form input {
-            padding: 10px;
-            width: 250px;
-            border-radius: 5px;
-            border: 1px solid #444;
-            background-color: #333;
-            color: #fff;
-            outline: none;
-            position: relative;
-        }
-
-        .auth-form button {
-            padding: 10px 20px;
-            width: 150px;
-            border-radius: 5px;
-            border: 1px solid #76c7c0;
-            background-color: #76c7c0;
-            color: #282c34;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .auth-form button:hover {
-            background-color: #5eb0aa;
-            border-color: #5eb0aa;
-        }
-
-        .switch-auth {
-            cursor: pointer;
-            color: #76c7c0;
-            text-decoration: underline;
-        }
-
-        .notification {
-            color: #ff6868;
-            font-size: 14px;
-            margin-top: -10px;
-            text-align: center;
-            display: none;
-        }
-    </style>
 </head>
 
-<body>
+<body class="page-splash">
     <div class="window">
         <div class="title-bar">
             <button class="close-btn" onclick="handleClose()">×</button>
@@ -175,11 +48,14 @@
         const randomMessage = messages[Math.floor(Math.random() * messages.length)];
         document.getElementById('loading-message').textContent = randomMessage;
 
-        setTimeout(() => window.api.authentificateRemember(), 5000);
-        
-        window.apiReceive.receiveAuthentificateRemember((event) => {
-            showAuth();
-        })
+        setTimeout( async () => {
+            await window.api.authentificateRemember()
+            .then((response) => {
+                if(!response.success) {
+                    showAuth();
+                }
+            })
+        }, 5000);
 
         function showAuth() {
             document.getElementById('splash-container').style.display = 'none';

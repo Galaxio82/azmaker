@@ -9,7 +9,7 @@ function toggleDropdown() {
 }
 
 async function loadCommands() {
-    const commands = await window.api.loadCommands();
+    const commands = await window.api.loadComponent("commands");
     const commandsContainer = $('#commands-container');
     commandsContainer.empty();
 
@@ -54,7 +54,7 @@ window.apiReceive.createdAction((event, data) => {
         let modifyButton = buttonContainer.find('button:contains("Modifier")');
         if (modifyButton.length > 0) {
             modifyButton.off('click').on('click', function () {
-                actionData = {
+                const actionData = {
                     id: data.id,
                     name: data.name,
                     type: data.type,
@@ -218,13 +218,26 @@ function addCommand() {
 
     if (commandName && commandType && trigger && selectedPermissions.length > 0 && actions.length > 0) {
         if(isEditMode) {
-            const updatedCommand = { id: currentCommandId, commandName, commandType, trigger, permissions: selectedPermissions, arguments: arguments1, actions };
-            window.api.editCommand(updatedCommand);
-            showNotification("Commande modifiée avec succès !");
+            const commands = { id: currentCommandId, commandName, commandType, trigger, permissions: selectedPermissions, arguments: arguments1, actions };
+            window.api.actionComponent({ action: "sdg", component: "commands", commands })
+            .then((response) => {
+                console.log(response)
+                if(response.success) {
+                    showNotification("Commande modifiée avec succès !");
+                } else {
+                    showNotification(response.message, true);
+                }
+            })
         } else {
-            const command = { id: (parseInt(currentNumberCommandId) + 1).toString(), commandName, commandType, trigger, permissions: selectedPermissions, arguments: arguments1, actions };
-            window.api.saveCommand(command);
-            showNotification("Commande créée avec succès !");
+            const commands = { id: (parseInt(currentNumberCommandId) + 1).toString(), commandName, commandType, trigger, permissions: selectedPermissions, arguments: arguments1, actions };
+            window.api.actionComponent({ action: "save", component: "commands", commands })
+            .then((response) => {
+                if(response.success) {
+                    showNotification("Commande créé avec succès !");
+                } else {
+                    showNotification(response.message, true);
+                }
+            })
         }
         cancelEdit();
     } else {
@@ -283,7 +296,7 @@ function editCommand(cmd, commandId) {
         const buttonContainer = $('<div>').addClass("action-buttons").css({ display: 'flex', gap: '5px' });
 
         const modifyButton = $('<button>').text('Modifier').css({ padding: '3px 5px', fontSize: '10px' }).on('click', () => {
-            actionData = {
+            const actionData = {
                 id: actionId,
                 name: action.name,
                 type: action.type,
@@ -309,9 +322,15 @@ function editCommand(cmd, commandId) {
 }
 
 function deleteCommand() {
-    window.api.deleteCommand(currentCommandId);
+    window.api.actionComponent({ action: "delete", component: "commands", id: currentCommandId })
+    .then((response) => {
+        if(response.success) {
+            showNotification("Commande supprimée avec succès !");
+        } else {
+            showNotification(response.message, true);
+        }
+    })
     cancelEdit()
-    showNotification("Commande supprimée avec succès !");
 }
 
 function cancelEdit() {

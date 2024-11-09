@@ -20,40 +20,13 @@ class DiscordBot {
         return null;
     }
 
-    loadModule() {
-        const modulesPath = path.join(app.getPath('userData'), './Local/modules.json');
-        if (fs.existsSync(modulesPath)) {
-            const data = fs.readFileSync(modulesPath);
-            return JSON.parse(data);
-        }
-        return [];
-    }
-
-    readCommands() {
-        const commandsPath = path.join(app.getPath('userData'), './Local/commands.json');
+    readComponents(component) {
+        const commandsPath = path.join(app.getPath('userData'), `./Local/${component}.json`);
         if (fs.existsSync(commandsPath)) {
             const data = fs.readFileSync(commandsPath);
             return JSON.parse(data);
         }
-        return [];
-    }
-
-    readEvents() {
-        const eventsPath = path.join(app.getPath('userData'), './Local/events.json');
-        if (fs.existsSync(eventsPath)) {
-            const data = fs.readFileSync(eventsPath);
-            return JSON.parse(data);
-        }
-        return [];
-    }
-
-    readVariables() {
-        const variablesPath = path.join(app.getPath('userData'), './Local/variables.json');
-        if (fs.existsSync(variablesPath)) {
-            const data = fs.readFileSync(variablesPath);
-            return JSON.parse(data);
-        }
-        return [];
+        return [];    
     }
 
     loginPresence() {
@@ -123,18 +96,18 @@ class DiscordBot {
             });
 
         this.client.on('messageCreate', (message) => {
-            const commands = this.readCommands();
+            const commands = this.readComponents("commands");
             this.handlePrefixCommands(message, commands);
         });
 
         this.client.on('interactionCreate', (interaction) => {
-            const commands = this.readCommands();
+            const commands = this.readComponents("commands");
             this.handleSlashCommands(interaction, commands)
         })
 
         this.client.once('ready', async () => {
             console.log(`Connecté en tant que ${this.client.user.tag}`);
-            const commands = this.readCommands();
+            const commands = this.readComponents("commands");
             await this.registerSlashCommands(this.client, "1012307943733084231", commands);
         });
     }

@@ -4,23 +4,15 @@ contextBridge.exposeInMainWorld('api', {
   navigateTo: (page) => ipcRenderer.send('navigate-to', page),
 
   authentificate: (data) => ipcRenderer.send('authentificate', data),
-  authentificateRemember: () => ipcRenderer.send('authentificateRemember'),
-  infoAboutUse: () => ipcRenderer.send('infoAboutUse'),
+  authentificateRemember: () => ipcRenderer.invoke('authentificateRemember'),
+  infoAboutUse: () => ipcRenderer.invoke('infoAboutUse'),
 
-  loadCommands: () => ipcRenderer.invoke('load-commands'),
-  loadEvents: () => ipcRenderer.invoke('load-events'),
-  loadVariables: () => ipcRenderer.invoke('load-variables'),
+  loadComponent: (component) => ipcRenderer.invoke('load-component', component),
 
   loadModules: () => ipcRenderer.send('load-modules'),
   saveModules: (modules) => ipcRenderer.send('save-modules', modules), 
 
-  saveCommand: (command) => ipcRenderer.send('save-command', command),
-  editCommand: (updatedCommand) => ipcRenderer.send('edit-command', updatedCommand),
-  deleteCommand: (commandId) => ipcRenderer.send('delete-command', commandId),
-
-  saveEvent: (data) => ipcRenderer.send('save-event', data),
-  editEvent: (updatedEvent) => ipcRenderer.send('edit-event', updatedEvent),
-  deleteEvent: (eventId) => ipcRenderer.send('delete-event', eventId),
+  actionComponent: (component) => ipcRenderer.invoke('action-component', component),
 
   actionWindow: (data) => ipcRenderer.send('action-window', data),
   createAction: (data) => ipcRenderer.send('create-action', data),
@@ -33,8 +25,8 @@ contextBridge.exposeInMainWorld('api', {
 
 contextBridge.exposeInMainWorld('apiReceive', {
 
-  receiveAuthentificate: (callback) => ipcRenderer.on('authentificate-response', callback),
-  receiveAuthentificateRemember: (callback) => ipcRenderer.on('authentificateRemember-response', callback),
+  //receiveAuthentificate: (callback) => ipcRenderer.on('authentificate-response', callback),
+  //receiveAuthentificateRemember: (callback) => ipcRenderer.on('authentificateRemember-response', callback),
 
   receiveModules: (callback) => ipcRenderer.on('modules-loaded', callback),
 

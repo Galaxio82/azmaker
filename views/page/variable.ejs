@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Variables</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            font-family: Arial, sans-serif;
+            background-color: #1a1a1a;
+            color: #f0f0f0;
+        }
+
+        h3 {
+            text-align: center;
+        }
+
+        nav {
+            background-color: #2a2a2a;
+            padding: 10px;
+            border-bottom: 1px solid #333;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+        }
+
+        nav a {
+            color: #f0f0f0;
+            margin-right: 15px;
+            text-decoration: none;
+            padding: 8px;
+            border-radius: 5px;
+        }
+
+        nav a:hover {
+            background-color: #444;
+        }
+
+        #variable-list {
+            width: 25%;
+            border-right: 1px solid #333;
+            padding: 10px;
+            height: calc(100vh - 60px);
+            overflow-y: auto;
+            background-color: #2a2a2a;
+            margin-top: 39px;
+        }
+
+        #variable-actions {
+            width: 80%;
+            padding: 20px;
+            background-color: #2a2a2a;
+            margin-top: 39px;
+        }
+
+        .variable-item {
+            padding: 10px;
+            cursor: pointer;
+            border: 1px solid #555;
+            margin-bottom: 5px;
+            background-color: #333;
+            border-radius: 5px;
+        }
+
+        .variable-item:hover {
+            background-color: #444;
+        }
+
+        input,
+        select,
+        button {
+            display: block;
+            margin-bottom: 10px;
+            width: 100%;
+            border-radius: 5px;
+            border: 1px solid #555;
+            padding: 8px;
+            box-sizing: border-box;
+            background-color: #3a3a3a;
+            color: #f0f0f0;
+        }
+
+        button {
+            background-color: #444;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #555;
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px;
+            background-color: #4caf50;
+            color: white;
+            border-radius: 5px;
+            z-index: 1000;
+            transition: opacity 0.5s ease;
+            opacity: 1;
+        }
+
+        .notification.error {
+            background-color: #f44336;
+        }
+
+        /* ScrollBar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #2a2a2a;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background-color: #444;
+            border-radius: 10px;
+            border: 2px solid #2a2a2a;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background-color: #555;
+        }
+    </style>
+</head>
+
+<body>
+    <nav>
+        <a href="#" onclick="navigateTo('index')">Commandes</a>
+        <a href="#" onclick="navigateTo('page/event')">Évènements</a>
+        <a href="#" onclick="navigateTo('page/variable')">Variables</a>
+        <a href="#" onclick="navigateTo('page/bot')">Bot</a>
+        <a href="#" onclick="navigateTo('page/about')">About</a>
+    </nav>
+
+    <div id="variable-list">
+        <h3>Variables et Tableaux</h3>
+        <div id="variables-container"></div>
+    </div>
+
+    <div id="variable-actions">
+        <h3>Gérer les Variables</h3>
+        <input type="text" id="variable-key" placeholder="Nom de la variable ou du tableau" />
+        <input type="text" id="variable-value" placeholder="Valeur de la variable (si applicable)" />
+        <button onclick="addOrUpdateVariable()">Ajouter ou Mettre à Jour</button>
+        <button onclick="deleteVariable()">Supprimer</button>
+
+        <h4>Valeurs Imbriquées</h4>
+        <input type="text" id="nested-path" placeholder="Chemin imbriqué (ex : userData.12345.name)" />
+        <input type="text" id="nested-value" placeholder="Nouvelle valeur pour ce chemin" />
+        <button onclick="setNestedValue()">Définir ou Mettre à Jour</button>
+        <button onclick="deleteNestedValue()">Supprimer la Valeur Imbriquée</button>
+    </div>
+    <div id="notification" class="notification" style="display: none;"></div>
+
+    <script src="../../public/js/variable.js"></script>
+    <script>
+        const variables = {};
+
+        function addOrUpdateVariable() {
+            const key = document.getElementById('variable-key').value;
+            const value = document.getElementById('variable-value').value;
+            if (!key) return showNotification('Veuillez entrer un nom de variable', true);
+
+            variables[key] = value || null;
+            refreshVariableList();
+            showNotification(`Variable "${key}" ajoutée ou mise à jour`);
+        }
+
+        function deleteVariable() {
+            const key = document.getElementById('variable-key').value;
+            if (!key || !(key in variables)) return showNotification('La variable n’existe pas', true);
+            delete variables[key];
+            refreshVariableList();
+            showNotification(`Variable "${key}" supprimée`);
+        }
+
+        function setNestedValue() {
+            const path = document.getElementById('nested-path').value;
+            const value = document.getElementById('nested-value').value;
+
+            if (!path) return showNotification('Veuillez entrer un chemin', true);
+
+            const keys = path.split('.');
+            let current = variables;
+
+            keys.forEach((key, index) => {
+                if (index === keys.length - 1) {
+                    current[key] = value;
+                } else {
+                    if (!current[key]) current[key] = {};
+                    current = current[key];
+                }
+            });
+
+            refreshVariableList();
+            console.log(variables)
+            showNotification(`Valeur imbriquée définie pour "${path}".`);
+        }
+
+        function deleteNestedValue() {
+            const path = document.getElementById('nested-path').value;
+            if (!path) return showNotification('Veuillez entrer un chemin', true);
+
+            const keys = path.split('.');
+            let current = variables;
+
+            for (let i = 0; i < keys.length - 1; i++) {
+                if (!current[keys[i]]) return showNotification(`Chemin "${path}" non trouvé`, true);
+                current = current[keys[i]];
+            }
+
+            const lastKey = keys[keys.length - 1];
+            if (!current[lastKey]) return showNotification(`Clé "${lastKey}" non trouvé`, true);
+            delete current[lastKey];
+
+            refreshVariableList();
+            showNotification(`Valeur imbriquée supprimée pour "${path}"`);
+        }
+
+        function refreshVariableList() {
+            const container = document.getElementById('variables-container');
+            container.innerHTML = '';
+
+            Object.keys(variables).forEach(key => {
+                const value = JSON.stringify(variables[key]);
+
+                // Ajouter à la liste de gauche
+                const div = document.createElement('div');
+                div.textContent = `${key}: ${value}`;
+                div.className = 'variable-item';
+                container.appendChild(div);
+            });
+        }
+
+        function showNotification(message, isError = false) {
+            const notification = document.getElementById('notification');
+            notification.innerText = message;
+            notification.className = isError ? 'notification error' : 'notification';
+            notification.style.display = 'block';
+
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+
+        function navigateTo(page) {
+            window.api.navigateTo(page);
+        }
+    </script>
+</body>
+
+</html>

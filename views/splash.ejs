@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AzMaker</title>
+    <style>
+        body,
+        html {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #282c34;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .window {
+            width: 530px;
+            height: 600px;
+            background-color: #333;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+        }
+
+        .title-bar {
+            width: 100%;
+            height: 30px;
+            background-color: #444;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            -webkit-app-region: drag;
+        }
+
+        .close-btn {
+            margin-right: 10px;
+            background-color: transparent;
+            border: none;
+            color: #76c7c0;
+            font-size: 18px;
+            cursor: pointer;
+            -webkit-app-region: no-drag;
+        }
+
+        .splash-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+        }
+
+        .logo img {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 30px;
+        }
+
+        .loading-message {
+            font-size: 18px;
+            font-weight: bold;
+            color: #ffffff;
+            text-shadow: 0 1px 5px rgba(255, 255, 255, 0.6);
+        }
+
+        .auth-container {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            height: 100%;
+        }
+
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .auth-form input {
+            padding: 10px;
+            width: 250px;
+            border-radius: 5px;
+            border: 1px solid #444;
+            background-color: #333;
+            color: #fff;
+            outline: none;
+            position: relative;
+        }
+
+        .auth-form button {
+            padding: 10px 20px;
+            width: 150px;
+            border-radius: 5px;
+            border: 1px solid #76c7c0;
+            background-color: #76c7c0;
+            color: #282c34;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .auth-form button:hover {
+            background-color: #5eb0aa;
+            border-color: #5eb0aa;
+        }
+
+        .switch-auth {
+            cursor: pointer;
+            color: #76c7c0;
+            text-decoration: underline;
+        }
+
+        .notification {
+            color: #ff6868;
+            font-size: 14px;
+            margin-top: -10px;
+            text-align: center;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="window">
+        <div class="title-bar">
+            <button class="close-btn" onclick="handleClose()">×</button>
+        </div>
+
+        <div class="splash-container" id="splash-container">
+            <div class="logo">
+                <img src="../public/images/logo.png" alt="Logo">
+            </div>
+            <div id="loading-message" class="loading-message"></div>
+        </div>
+
+        <div class="auth-container" id="auth-container">
+            <div id="login-form" class="auth-form">
+                <h2>Connexion</h2>
+                <input type="email" placeholder="Email" id="login-email">
+                <input type="password" placeholder="Mot de passe" id="login-password">
+                <input type="password" placeholder="Confirmer le mot de passe" id="confirm-password">
+                <input type="checkbox" name="remember" id="remember" value="1">
+                <button onclick="handleLogin()">Se connecter</button>
+                <p class="switch-auth">Inscrivez-vous</p>
+                <p id="notification" class="notification" style="display: none;"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const messages = [
+            "Chargement des ressources...",
+            "Préparation de l'application...",
+            "Veuillez patienter un instant...",
+            "Configuration de l'environnement...",
+            "Lancement de l'application...",
+            "Chargement des données..."
+        ];
+
+        const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+        document.getElementById('loading-message').textContent = randomMessage;
+
+        setTimeout(() => window.api.authentificateRemember(), 5000);
+        
+        window.apiReceive.receiveAuthentificateRemember((event) => {
+            showAuth();
+        })
+
+        function showAuth() {
+            document.getElementById('splash-container').style.display = 'none';
+            document.getElementById('auth-container').style.display = 'flex';
+        }
+
+        function showLogin() {
+            document.getElementById('login-form').style.display = 'flex';
+        }
+
+        function handleLogin() {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            // const passwordPattern = /^(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
+
+            if (!emailPattern.test(email)) {
+                showNotification("Adresse email invalide.");
+                return;
+            }
+
+            // if (!passwordPattern.test(password)) {
+            //     showNotification("Le mot de passe doit contenir au moins 8 caractères et un caractère spécial.");
+            //     return;
+            // }
+
+            if (password !== confirmPassword) {
+                showNotification("Les mots de passe ne correspondent pas.");
+                return;
+            }
+
+            const data = {
+                email: email,
+                password: password
+            }
+
+            window.api.authentificate(data);
+        }
+
+        function showNotification(message) {
+            const notificationElement = document.getElementById('notification');
+            notificationElement.textContent = message;
+            notificationElement.style.display = 'block';
+        }
+
+        function handleClose() {
+            window.close();
+        }
+    </script>
+</body>
+
+</html>

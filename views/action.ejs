@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AzMaker</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            font-family: Arial, sans-serif;
+            background-color: #1a1a1a;
+            color: #f0f0f0;
+            height: 100vh;
+            user-select: none;
+        }
+
+        #command-list-section,
+        #event-list-section {
+            width: 20%;
+            border-right: 1px solid #333;
+            padding: 10px;
+            height: auto;
+            overflow-y: auto;
+            background-color: #2a2a2a;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+
+        @media (max-width: 1200px) {
+
+            #command-list-section,
+            #event-list-section {
+                width: 30%;
+            }
+        }
+
+        #form-section {
+            width: 82%;
+            padding: 20px;
+            background-color: #2a2a2a;
+            border-left: 1px solid #333;
+            overflow-y: auto;
+            height: auto;
+        }
+
+        #form-section h3 {
+            text-align: center;
+        }
+
+        .group {
+            margin-bottom: 15px;
+            cursor: pointer;
+            padding: 10px;
+            background-color: #333;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .actions {
+            display: none;
+            margin-top: 10px;
+            padding-left: 15px;
+        }
+
+        input,
+        select,
+        button {
+            display: block;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border: 1px solid #555;
+            padding: 8px;
+            box-sizing: border-box;
+            background-color: #3a3a3a;
+            color: #f0f0f0;
+            width: calc(100% - 16px);
+        }
+
+        button {
+            background-color: #444;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #555;
+        }
+
+        .embed-group {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .embed-group div {
+            display: flex;
+            flex-direction: column;
+        }
+
+        textarea {
+            resize: vertical;
+            height: 100px;
+        }
+
+        .full-width {
+            grid-column: span 2;
+        }
+
+        .color-input {
+            width: calc(100% - 16px);
+            height: 40px;
+            display: block;
+            border: 1px solid #555;
+            border-radius: 5px;
+            background-color: #3a3a3a;
+            cursor: pointer;
+        }
+
+        .edit-mode-indicator {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: #3a3a3a;
+            color: white;
+            padding: 15px;
+            font-size: 16px;
+            text-align: center;
+            z-index: 1000;
+            box-shadow: 0 -4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .edit-mode-indicator p {
+            margin: 0;
+        }
+
+        .edit-mode-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .edit-mode-text {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .edit-mode-description {
+            font-size: 12px;
+            color: #333;
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px;
+            background-color: #4caf50;
+            color: white;
+            border-radius: 5px;
+            z-index: 1000;
+            transition: opacity 0.5s ease;
+            opacity: 1;
+        }
+
+        .notification.error {
+            background-color: #f44336;
+        }
+
+        /* ScrollBar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #2a2a2a;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background-color: #444;
+            border-radius: 10px;
+            border: 2px solid #2a2a2a;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background-color: #555;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="command-list-section" style="display: none;">
+        <h3>Liste des actions</h3>
+    </div>
+
+    <div id="event-list-section" style="display: none;">
+        <h3>Liste des actions</h3>
+
+        <div class="group" onclick="toggleActions('textActions')">
+            <strong>Messages</strong>
+        </div>
+        <div class="actions" id="textActions">
+            <button value="sendMessage" onclick="setActionDetails(this.value)">Envoyer un message</button>
+            <button value="sendEmbed" onclick="setActionDetails(this.value)">Envoyer un embed</button>
+            <button value="replyMessage" onclick="setActionDetails(this.value)">Répondre à un message</button>
+            <button value="deleteMessage" onclick="setActionDetails(this.value)">Supprimer un message</button>
+            <button value="pinMessage" onclick="setActionDetails(this.value)">Épingler un message</button>
+            <button value="unpinMessage" onclick="setActionDetails(this.value)">Désépingler un message</button>
+            <button value="fetchMessage" onclick="setActionDetails(this.value)">Récupérer des messages</button>
+        </div>
+    </div>
+
+    <div id="form-section">
+        <h3 id="action-types">Création</h3>
+        <label for="action-name">Nom de l'action :</label>
+        <input type="text" id="action-name" placeholder="Nom de l'action" />
+
+        <div id="action-fields"></div>
+
+        <button onclick="saveAction()">Enregistrer</button>
+        <button onclick="cancelAction()">Annuler</button>
+    </div>
+
+    <div id="edit-mode-indicator" class="edit-mode-indicator" style="display: none;">
+        <div class="edit-mode-content">
+            <p id="edit-mode-text">Mode édition activé</p>
+            <p id="edit-mode-description">Vous modifiez l'action <strong>"id"</strong> "<strong>name</strong>" de type <strong>type</strong>.</p>
+        </div>
+    </div>
+
+    <div id="notification" class="notification" style="display: none;"></div>
+    <script src="../public/js/modules/jquery-3.6.0.min.js"></script>
+    <script src="../public/js/modules/duplicate.js"></script>
+    <script>
+        function addScriptOnce(src) {
+            return new Promise((resolve, reject) => {
+                const existingScript = $(`script[src="${src}"]`);
+                if (existingScript.length) {
+                    resolve();
+                } else {
+                    $.getScript(src)
+                        .done(() => {
+                            resolve();
+                        })
+                        .fail((jqxhr, settings, exception) => {
+                            reject(new Error(`Erreur de chargement du script : ${src} - ${exception}`)); // Si erreur
+                        });
+                }
+            });
+        }
+
+        async function loadModule(moduleName) {
+            try {
+                const response = await fetch(`../modules/${moduleName}/${moduleName}.html`);
+                const htmlContent = await response.text();
+                $('#command-list-section').append(htmlContent);
+                await addScriptOnce(`../modules/${moduleName}/${moduleName}.js`);
+            } catch (error) {
+                console.error(`Erreur de chargement du module ${moduleName}:`, error);
+            }
+        }
+
+        async function loadModules() {
+            try {
+                window.api.loadModules();
+                window.apiReceive.receiveModules(async (event, modules) => {
+                    const loadPromises = [];
+
+                    if (modules.discord) {
+                        loadPromises.push(loadModule('discord'));
+                    }
+
+                    $.each(modules, (moduleName, isActive) => {
+                        if (isActive && moduleName !== 'discord') {
+                            loadPromises.push(loadModule(moduleName));
+                        }
+                    });
+
+                    await Promise.all(loadPromises);
+
+                    await addScriptOnce('../public/js/action.js');
+                });
+            } catch (error) {
+                console.error('Erreur de chargement des modules:', error);
+            }
+        }
+
+        loadModules();
+    </script>
+</body>
+
+</html>

@@ -5,15 +5,15 @@ let currentNumberCommandId;
 let currentCommandId;
 
 function toggleDropdown() {
-    $('#dropdown').toggle();
+    $('#dropdown').toggle().scrollTop(0);
 }
 
 async function loadCommands() {
-    const commands = await window.api.loadComponent("commands");
+    const commands = await window.api.loadComponent({ name: "commands", project: true });
     const commandsContainer = $('#commands-container');
     commandsContainer.empty();
 
-    currentNumberCommandId = Math.max(...commands.map(cmd => Number(cmd.id) || 1))
+    currentNumberCommandId = Math.max(0, ...commands.map(cmd => Number(cmd.id) || 0))
 
     if (Array.isArray(commands) && commands.length > 0) {
         commands.forEach(cmd => {
@@ -25,7 +25,7 @@ async function loadCommands() {
                     isEditMode = true;
                     $('#selected-permissions-container').empty();
                     const actionButton = $('.command-buttons'); $('.addCommandButton').text('Modifier la commande');
-                    const deleteButton = $('<button>').addClass('deleteCommandButton').text('Supprimer la Commande').on('click', () => { deleteCommand();  })
+                    const deleteButton = $('<button>').addClass('deleteCommandButton').text('Supprimer la Commande').on('click', () => { deleteCommand(); })
                     const cancelButton = $('<button>').addClass('cancelCommandButton').text('Annuler').on('click', () => { cancelEdit(); })
                     actionButton.append(deleteButton, cancelButton)
 
@@ -37,9 +37,24 @@ async function loadCommands() {
 }
 loadCommands();
 
+function moveRowUp(row) {
+    const previousRow = row.prev();  // Obtenir la ligne précédente
+    if (previousRow.length > 0) {
+        row.insertBefore(previousRow);  // Déplacer la ligne actuelle avant la ligne précédente
+    }
+}
+
+// Fonction pour déplacer une ligne vers le bas
+function moveRowDown(row) {
+    const nextRow = row.next();  // Obtenir la ligne suivante
+    if (nextRow.length > 0) {
+        row.insertAfter(nextRow);  // Déplacer la ligne actuelle après la ligne suivante
+    }
+}
+
 
 window.apiReceive.createdAction((event, data) => {
-    if(data.isEditMode == true) {
+    if (data.isEditMode == true) {
         const actionListBody = $('#action-list tbody')[0];
         console.log(data)
         const rowToEdit = $(actionListBody).find(`tr[action-id="${data.id}"]`);
@@ -54,7 +69,7 @@ window.apiReceive.createdAction((event, data) => {
         let modifyButton = buttonContainer.find('button:contains("Modifier")');
         if (modifyButton.length > 0) {
             modifyButton.off('click').on('click', function () {
-                const actionData = {
+                let actionData = {
                     id: data.id,
                     name: data.name,
                     type: data.type,
@@ -70,50 +85,78 @@ window.apiReceive.createdAction((event, data) => {
         const actionListBody = $('#action-list tbody')[0];
         const actionId = `${Math.floor(Math.random() * 1000000)}-${Math.floor(Math.random() * 1000000)}`
         const row = actionListBody.insertRow();
-    
+
         row.insertCell(0).textContent = data.name;
         row.insertCell(1).textContent = data.type;
         row.insertCell(2).textContent = JSON.stringify(data.details);
-    
+
         const buttonContainer = $('<div>').addClass("action-buttons").css({
             display: 'flex',
-            gap: '5px',
+            gap: '5px'
         });
-    
-        const modifyButton = $('<button>')
-        .text('Modifier')
-        .css({
-            padding: '3px 5px',
-            fontSize: '10px',
-        })
-        .on('click', function () {
-            actionData = {
-                id: actionId,
-                name: data.name,
-                type: data.type,
-                details: data.details
 
-            }
-            window.api.actionWindow({ page: "command", data: actionData });
-        });
-    
+        const modifyButton = $('<button>')
+            .text('Modifier')
+            .css({
+                padding: '4px 8px',
+                margin: 'auto',
+                height: '24px',
+                width: '190px',
+                borderRadius: '5px',
+                cursor: 'pointer'
+            })
+            .on('click', function () {
+                let actionData = {
+                    id: actionId,
+                    name: data.name,
+                    type: data.type,
+                    details: data.details
+                }
+                window.api.actionWindow({ page: "command", data: actionData });
+            });
+
         const deleteButton = $('<button>')
-        .text('Supprimer')
-        .css({
-            padding: '3px 5px',
-            fontSize: '10px',
-        })
-        .on('click', function () {
-            showNotification("Action supprimée avec succès !");
-            $(row).remove();
+            .text('Supprimer')
+            .css({
+                padding: '4px 8px',
+                margin: 'auto',
+                height: '24px',
+                width: '190px',
+                borderRadius: '5px',
+                cursor: 'pointer'
+            })
+            .on('click', function () {
+                showNotification("Action supprimée avec succès !");
+                $(row).remove();
+            });
+
+        const upButton = $('<button>').addClass('move-up').text('↑').css({
+            padding: '4px 8px',
+            margin: '0',
+            height: '34px',
+            width: '34px',
+            borderRadius: '50%',
+            cursor: 'pointer'
+        }).on('click', function () {
+            moveRowUp(row);
         });
-    
-        buttonContainer.append(modifyButton, deleteButton);
+
+        const downButton = $('<button>').addClass('move-down').text('↓').css({
+            padding: '4px 8px',
+            margin: '0',
+            height: '34px',
+            width: '34px',
+            borderRadius: '50%',
+            cursor: 'pointer'
+        }).on('click', function () {
+            moveRowDown(row);
+        });
+
+        buttonContainer.append(modifyButton, deleteButton, upButton, downButton);
         const actionCell = $('<td>').append(buttonContainer);
         $(row).attr("action-id", actionId).append(actionCell);
         showNotification("Action ajoutée avec succès !");
     }
-
     window.api.actionWindow({ page: "close" });
 })
 
@@ -133,20 +176,20 @@ function addArgument() {
 
     if (commandType === "SLASH") {
         const argDescription = $('<input>').attr('type', 'text').attr('placeholder', 'Description de l\'argument');
-        
+
         const argRequired = $('<input>').attr('type', 'checkbox');
         const requiredLabel = $('<label>').text('Requis').css('margin-right', '10px').append(argRequired);
-        
+
         argumentItem.append(argOrder, argName, argType, argDescription, requiredLabel);
     } else {
         argumentItem.append(argOrder, argName);
     }
-    
+
     const deleteButton = $('<button>').text('Supprimer').css('margin-left', '5px').on('click', () => {
         argumentItem.remove();
         showNotification("Argument supprimé avec succès !");
     });
-    
+
     argumentItem.append(deleteButton);
     argumentList.append(argumentItem);
     showNotification("Argument ajouté avec succès");
@@ -156,15 +199,15 @@ function selectPermission(phrasePermission, permission) {
     const container = $('#selected-permissions-container');
     const existingPermissions = Array.from(container.children()).map(div => div.textContent.trim());
 
-    const permissionText = $('#dropdown div').filter(function() {
-        return $(this).attr('onclick') && $(this).attr('onclick').includes(permission); 
+    const permissionText = $('#dropdown div').filter(function () {
+        return $(this).attr('onclick') && $(this).attr('onclick').includes(permission);
     }).text().trim();
 
     if (!existingPermissions.includes(permissionText)) {
         const permissionDiv = $('<div>').addClass('selected-permission').attr('data-name', permission).text(permissionText)
-        .on('click', function () {
-            permissionDiv.remove();
-        })
+            .on('click', function () {
+                permissionDiv.remove();
+            })
 
         container.append(permissionDiv);
     }
@@ -178,13 +221,13 @@ function addCommand() {
     const trigger = $('.trigger').val();
 
     const selectedPermissions = $('#selected-permissions-container .selected-permission')
-        .map(function() {
+        .map(function () {
             return $(this).data('name');
         }).get();
 
     const arguments1 = [];
     const argumentList = $('#argument-list').children();
-    argumentList.each(function() {
+    argumentList.each(function () {
         const argOrder = $(this).find("input[type='number']").val();
         const argName = $(this).find("input[type='text']").val();
         let argDescription = null;
@@ -209,7 +252,7 @@ function addCommand() {
 
     const actions = [];
     const ActionListBody = $('#action-list tbody')[0];
-    $(ActionListBody).find('tr').each(function() {
+    $(ActionListBody).find('tr').each(function () {
         const actionName = $(this).find('td').eq(0).text();
         const actionType = $(this).find('td').eq(1).text();
         const actionDetails = JSON.parse($(this).find('td').eq(2).text());
@@ -217,27 +260,26 @@ function addCommand() {
     });
 
     if (commandName && commandType && trigger && selectedPermissions.length > 0 && actions.length > 0) {
-        if(isEditMode) {
+        if (isEditMode) {
             const commands = { id: currentCommandId, commandName, commandType, trigger, permissions: selectedPermissions, arguments: arguments1, actions };
-            window.api.actionComponent({ action: "sdg", component: "commands", commands })
-            .then((response) => {
-                console.log(response)
-                if(response.success) {
-                    showNotification("Commande modifiée avec succès !");
-                } else {
-                    showNotification(response.message, true);
-                }
-            })
+            window.api.actionComponent({ action: "edit", component: "commands", commands })
+                .then((response) => {
+                    if (response.success) {
+                        showNotification("Commande modifiée avec succès !");
+                    } else {
+                        showNotification(response.message, true);
+                    }
+                })
         } else {
             const commands = { id: (parseInt(currentNumberCommandId) + 1).toString(), commandName, commandType, trigger, permissions: selectedPermissions, arguments: arguments1, actions };
             window.api.actionComponent({ action: "save", component: "commands", commands })
-            .then((response) => {
-                if(response.success) {
-                    showNotification("Commande créé avec succès !");
-                } else {
-                    showNotification(response.message, true);
-                }
-            })
+                .then((response) => {
+                    if (response.success) {
+                        showNotification("Commande créé avec succès !");
+                    } else {
+                        showNotification(response.message, true);
+                    }
+                })
         }
         cancelEdit();
     } else {
@@ -293,25 +335,69 @@ function editCommand(cmd, commandId) {
             $('<td>').text(JSON.stringify(action.details))
         );
 
-        const buttonContainer = $('<div>').addClass("action-buttons").css({ display: 'flex', gap: '5px' });
-
-        const modifyButton = $('<button>').text('Modifier').css({ padding: '3px 5px', fontSize: '10px' }).on('click', () => {
-            const actionData = {
-                id: actionId,
-                name: action.name,
-                type: action.type,
-                details: action.details
-
-            }
-            window.api.actionWindow({ page: "command", data: actionData });
+        const buttonContainer = $('<div>').addClass("action-buttons").css({
+            display: 'flex',
+            gap: '5px'
         });
 
-        const deleteButton = $('<button>').text('Supprimer').css({ padding: '3px 5px', fontSize: '10px' }).on('click', () => {
-            showNotification("Action supprimée avec succès !");
-            row.remove();
+        const modifyButton = $('<button>')
+            .text('Modifier')
+            .css({
+                padding: '4px 8px',
+                margin: 'auto',
+                height: '24px',
+                width: '190px',
+                borderRadius: '5px',
+                cursor: 'pointer'
+            })
+            .on('click', function () {
+                let actionData = {
+                    id: actionId,
+                    name: action.name,
+                    type: action.type,
+                    details: action.details
+                }
+                window.api.actionWindow({ page: "command", data: actionData });
+            });
+
+        const deleteButton = $('<button>')
+            .text('Supprimer')
+            .css({
+                padding: '4px 8px',
+                margin: 'auto',
+                height: '24px',
+                width: '190px',
+                borderRadius: '5px',
+                cursor: 'pointer'
+            })
+            .on('click', function () {
+                showNotification("Action supprimée avec succès !");
+                $(row).remove();
+            });
+
+        const upButton = $('<button>').addClass('move-up').text('↑').css({
+            padding: '4px 8px',
+            margin: '0',
+            height: '34px',
+            width: '34px',
+            borderRadius: '50%',
+            cursor: 'pointer'
+        }).on('click', function () {
+            moveRowUp(row);
         });
 
-        buttonContainer.append(modifyButton, deleteButton);
+        const downButton = $('<button>').addClass('move-down').text('↓').css({
+            padding: '4px 8px',
+            margin: '0',
+            height: '34px',
+            width: '34px',
+            borderRadius: '50%',
+            cursor: 'pointer'
+        }).on('click', function () {
+            moveRowDown(row);
+        });
+
+        buttonContainer.append(modifyButton, deleteButton, upButton, downButton);
         const actionCell = $('<td>').append(buttonContainer);
         row.append(actionCell);
 
@@ -323,13 +409,13 @@ function editCommand(cmd, commandId) {
 
 function deleteCommand() {
     window.api.actionComponent({ action: "delete", component: "commands", id: currentCommandId })
-    .then((response) => {
-        if(response.success) {
-            showNotification("Commande supprimée avec succès !");
-        } else {
-            showNotification(response.message, true);
-        }
-    })
+        .then((response) => {
+            if (response.success) {
+                showNotification("Commande supprimée avec succès !");
+            } else {
+                showNotification(response.message, true);
+            }
+        })
     cancelEdit()
 }
 
@@ -353,7 +439,7 @@ function updateCommandInputs() {
     const commandType = $('#command-type').val();
     const inputElement = $('#command-input');
     const argumentSection = $('#argument-section');
-    
+
     if (commandType === "PREFIX") {
         inputElement.attr('placeholder', "Déclencheur = '(prefix)ping'");
         argumentSection.show();
@@ -374,3 +460,78 @@ window.onclick = function (event) {
         dropdown.hide();
     }
 }
+
+$(document).ready(function () {
+    let draggedRow = null;
+    let offsetY = 0;
+
+    // Sélectionner toutes les lignes du tableau
+    const rows = $('#action-list tbody tr');
+
+    // Ajout d'un gestionnaire de clic sur chaque ligne du tableau pour commencer le déplacement
+    rows.on('mousedown', function (e) {
+        draggedRow = $(this); // Sauvegarder la ligne actuellement déplacée
+        offsetY = e.clientY - draggedRow.offset().top; // Calculer la distance de la souris au sommet de la ligne
+        $(document).on('mousemove', moveRow); // Ajouter l'écouteur de mouvement de la souris
+        $(document).on('mouseup', dropRow); // Ajouter l'écouteur de relâchement de la souris
+    });
+
+    // Fonction qui déplace la ligne avec la souris
+    function moveRow(e) {
+        if (draggedRow) {
+            // Déplacer la ligne en suivant la souris
+            draggedRow.css({
+                position: 'absolute',
+                zIndex: 1000,
+                top: e.clientY - offsetY + 'px',
+                left: draggedRow.offset().left + 'px' // Garder la position à gauche de la fenêtre
+            });
+        }
+    }
+
+    // Fonction qui "dépose" la ligne à la bonne position lorsqu'on relâche la souris
+    function dropRow(e) {
+        if (draggedRow) {
+            // Calculer la ligne la plus proche en fonction de la position de la souris
+            const rowsBelow = $('#action-list tbody tr');
+            let closestRow = null;
+            let minDistance = Infinity;
+
+            rowsBelow.each(function () {
+                const row = $(this);
+                const rect = row[0].getBoundingClientRect();
+                const distance = Math.abs(e.clientY - rect.top - rect.height / 2);
+
+                if (distance < minDistance) {
+                    closestRow = row;
+                    minDistance = distance;
+                }
+            });
+
+            // Insérer la ligne avant ou après la ligne la plus proche
+            if (closestRow) {
+                const rect = closestRow[0].getBoundingClientRect();
+                if (e.clientY < rect.top + rect.height / 2) {
+                    closestRow.before(draggedRow); // Insérer avant
+                } else {
+                    closestRow.after(draggedRow); // Insérer après
+                }
+            }
+
+            // Réinitialiser les styles de la ligne déplacée
+            draggedRow.css({
+                position: 'static',
+                top: 'auto',
+                left: 'auto',
+                zIndex: 'auto'
+            });
+
+            // Supprimer les écouteurs d'événements lorsque le déplacement est terminé
+            $(document).off('mousemove', moveRow);
+            $(document).off('mouseup', dropRow);
+
+            draggedRow = null;
+        }
+    }
+});
+

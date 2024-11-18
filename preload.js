@@ -9,7 +9,6 @@ contextBridge.exposeInMainWorld('api', {
 
   loadComponent: (component) => ipcRenderer.invoke('load-component', component),
 
-  loadModules: () => ipcRenderer.send('load-modules'),
   saveModules: (modules) => ipcRenderer.send('save-modules', modules), 
 
   actionComponent: (component) => ipcRenderer.invoke('action-component', component),
@@ -20,20 +19,16 @@ contextBridge.exposeInMainWorld('api', {
 
   loadBot: () => ipcRenderer.invoke('load-bot'),
   startBot: (token, clientSecret, guildId) => ipcRenderer.send('start-bot', { token, clientSecret, guildId }),
-  stopBot: () => ipcRenderer.send('stop-bot')
+  stopBot: () => ipcRenderer.send('stop-bot'),
+
+  projectInfo: (project) => ipcRenderer.send('project-info', project),
 })
 
 contextBridge.exposeInMainWorld('apiReceive', {
-
-  //receiveAuthentificate: (callback) => ipcRenderer.on('authentificate-response', callback),
-  //receiveAuthentificateRemember: (callback) => ipcRenderer.on('authentificateRemember-response', callback),
-
   receiveModules: (callback) => ipcRenderer.on('modules-loaded', callback),
-
-  receiveBotInfo: (callback) => ipcRenderer.on('bot-info', callback),
-  receiveBotError: (callback) => ipcRenderer.once('bot-error', (event, errorMessage) => callback(event, errorMessage)),
-
+  receiveBotStatus: (callback) => ipcRenderer.on('bot-status', callback),
   createdAction: (callback) => ipcRenderer.on('created-action', callback),
+  receiveProject: (callback) => ipcRenderer.on('receive-project', callback)
 })
 
 contextBridge.exposeInMainWorld('versions', {

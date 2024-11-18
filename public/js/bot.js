@@ -9,10 +9,10 @@ window.onload = async () => {
 };
 
 async function loadBot() {
-    const loadBot = await window.api.loadBot();
-    $('#token').val(loadBot.token)
-    $('#client-secret').val(loadBot.clientSecret)
-    $('#guild-id').val(loadBot.guildId)
+    const loadBot = await window.api.loadComponent({ name: "config", project: true });
+    $('#token').val(loadBot.token);
+    $('#client-secret').val(loadBot.clientSecret);
+    $('#guild-id').val(loadBot.guildId);
 }
 
 function loadBotInfo() {
@@ -39,26 +39,25 @@ async function startBot() {
     } else {
         return showNotification("Veuillez entrer un token, client-secret et guild-id valide", true);
     }
+}
 
-
-    window.apiReceive.receiveBotInfo((event, botData) => {
-        $('#bot-name').text(`${botData.username}`);
-        $('#bot-id').text(`${botData.id}`);
-        $('#bot-status').text(`${botData.status}`);
+window.apiReceive.receiveBotStatus((event, response) => {
+    if (response.success) {
+        $('#bot-name').text(`${response.data.username}`);
+        $('#bot-id').text(`${response.data.id}`);
+        $('#bot-status').text(`${response.data.status}`);
 
         $('.profile-pic').css({
-            'background-image': `url(${botData.avatar})`,
+            'background-image': `url(${response.data.avatar})`,
             'background-size': 'cover'
         });
 
-        localStorage.setItem('botInfo', JSON.stringify(botData));
-    });
+        localStorage.setItem('botInfo', JSON.stringify(response.data));
 
-    window.apiReceive.receiveBotError((event, errorMessage) => {
-        showNotification(`Erreur: ${errorMessage}`, true);
-        window.apiReceive.receiveBotError = () => {};
-    });
-}
+    } else {
+        showNotification(response.message, true)
+    }
+})
 
 function stopBot() {
     window.api.stopBot();
@@ -78,12 +77,12 @@ function stopBot() {
 function toggleVisibility(inputId, buttonId) {
     const inputField = $(`#${inputId}`);
     const button = $(`#${buttonId}`);
-    
+
     if (inputField.attr('type') === 'password') {
         inputField.attr('type', 'text');
         button.text('Masquer');
     } else {
         inputField.attr('type', 'password');
         button.text('Afficher');
-    }    
+    }
 }

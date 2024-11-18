@@ -4,24 +4,37 @@ const { app } = require('electron');
 const fs = require('fs');
 const path = require('path');
 
+const DiscordAction = require('./discordAction');
+const logger = require('./logger');
+const discordAction = new DiscordAction();
+
 const client = new rpc.Client({ transport: 'ipc' });
 let startTime = Date.now();
 
 class DiscordBot {
-    constructor() {
+    constructor(project = null) {
+        this.project = project;
         this.client = null;
-        this.configPath = path.join(app.getPath('userData'), './Local/config.json');
+    }
+
+    setProject(project) {
+        this.project = project;
     }
 
     loadConfig() {
-        if (fs.existsSync(this.configPath)) {
-            return JSON.parse(fs.readFileSync(this.configPath, 'utf-8'));
+        if (fs.existsSync(path.join(app.getPath('userData'), `./Local/projects/${this.project}/config.json`))) {
+            return JSON.parse(fs.readFileSync(path.join(app.getPath('userData'), `./Local/projects/${this.project}/config.json`), 'utf-8'));
         }
         return null;
     }
 
-    readComponents(component) {
-        const commandsPath = path.join(app.getPath('userData'), `./Local/${component}.json`);
+    readComponents(component, project = false) {
+        let commandsPath;
+        if(project) {
+            commandsPath = path.join(app.getPath('userData'), `./Local/projects/${this.project}/${component}.json`);   
+        } else {
+            commandsPath = path.join(app.getPath('userData'), `./Local/${component}.json`);
+        }
         if (fs.existsSync(commandsPath)) {
             const data = fs.readFileSync(commandsPath);
             return JSON.parse(data);
@@ -38,7 +51,7 @@ class DiscordBot {
             });
     
             client.on('ready', () => {
-                console.log('Discord RPC connecté !');
+                logger.info('Discord RPC connecté !');
                 resolve();
             });
         });
@@ -62,15 +75,13 @@ class DiscordBot {
             }).catch(console.error);
         }
     }
-
+    
     startBot(event) {
         const config = this.loadConfig();
         const token = config.token;
 
         if (this.client) {
-            console.log("Le bot est déjà en cours d'exécution.");
-            event.sender.send('bot-error', 'Le bot est déjà en cours d\'exécution.');
-            return;
+            return event.sender.send('bot-status', { success: false, message: 'Le bot est déjà en cours d\'exécution.' });
         }
 
         this.client = new Client({
@@ -83,31 +94,37 @@ class DiscordBot {
 
         this.client.login(token)
             .then(() => {
-                event.sender.send('bot-info', {
-                    username: this.client.user.username,
-                    id: this.client.user.id,
-                    avatar: this.client.user.displayAvatarURL(),
-                    status: this.client.user.presence.status || 'offline'
-                });
+                let data = { username: this.client.user.username, id: this.client.user.id, avatar: this.client.user.displayAvatarURL(), status: this.client.user.presence.status || 'offline'}
+                event.sender.send('bot-status', { success: true, data: data });
             })
             .catch(error => {
-                console.error("Erreur de connexion:", error);
-                event.sender.send('bot-error', 'Erreur de connexion au bot Discord.');
+                logger.error(`Erreur de connexion : ${error}`);
+                return event.sender.send('bot-status', { success: false, message: 'Erreur de connexion au bot Discord.' });
             });
 
-        this.client.on('messageCreate', (message) => {
-            const commands = this.readComponents("commands");
-            this.handlePrefixCommands(message, commands);
-        });
+        const events = this.readComponents("events", true)
+        if (Array.isArray(events) && events.length > 0) {
+            events.forEach((evt) => {
+                if(evt.eventType == "messageCreate") {
+                    this.client.on('messageCreate', (message) => {
+                        const commands = this.readComponents("commands", true);
+                        if(message.author.bot) return;
+                        this.handlePrefixCommands(message, commands);
+                    }); 
+                }
 
-        this.client.on('interactionCreate', (interaction) => {
-            const commands = this.readComponents("commands");
-            this.handleSlashCommands(interaction, commands)
-        })
+                if(evt.eventType == "interactionCreate") {
+                    this.client.on('interactionCreate', (interaction) => {
+                        const commands = this.readComponents("commands", true);
+                        this.handleSlashCommands(interaction, commands)
+                    })
+                }
+            })
+        }
 
         this.client.once('ready', async () => {
-            console.log(`Connecté en tant que ${this.client.user.tag}`);
-            const commands = this.readComponents("commands");
+            logger.info(`Connecté en tant que ${this.client.user.tag}`);
+            const commands = this.readComponents("commands", true);
             await this.registerSlashCommands(this.client, "1012307943733084231", commands);
         });
     }
@@ -116,14 +133,14 @@ class DiscordBot {
         if (this.client) {
             this.client.destroy()
                 .then(() => {
-                    console.log("Bot arrêté avec succès");
+                    logger.info("Bot arrêté avec succès");
                     this.client = null;
                 })
                 .catch(error => {
-                    console.error("Erreur lors de l'arrêt du bot:", error);
+                    logger.error(`Erreur lors de l'arrêt du bot : ${error}`);
                 });
         } else {
-            console.log("Aucun bot en cours d'exécution.");
+            logger.info("Aucun bot en cours d'exécution");
         }
     }
 
@@ -131,14 +148,8 @@ class DiscordBot {
         commands.forEach(cmd => {
             if (cmd.commandType == "PREFIX") {
                 if (message.content.startsWith(cmd.trigger)) {
-                    if (cmd.permissions.length > 0 && cmd.permissions[0] !== 'NoPermission') {
-                        const hasPermission = cmd.permissions.some(permission => 
-                            message.member.permissions.has(permission)
-                        );
-                    
-                        if (!hasPermission) {
-                            return message.reply("Vous n'avez pas la permission d'exécuter cette commande.");
-                        }
+                    if (cmd.permissions !== 'NoPermission' && !cmd.permissions.every(permission => message.member.permissions.has(permission))) {
+                        return message.channel.send({ content: "Vous n'avez pas la permission d'exécuter cette commande." });
                     }
     
                     const args = this.extractArguments(message.content, cmd.trigger, cmd.arguments);
@@ -166,36 +177,22 @@ class DiscordBot {
     executeAction(action, message, text) {
         switch (action.type) {
             case 'sendMessage':
-                message.channel.send(text);
+                discordAction.sendMessage(message.channel, text);
                 break;
             case 'sendEmbed':
-                const embed = new EmbedBuilder()
-                    .setColor(text.color || '#0099ff');
-                
-                if (text.title) embed.setTitle(text.title);
-                if (text.description) embed.setDescription(text.description);
-                if (text.footer) {
-                    embed.setFooter({ text: text.footer });
-                }
-                if (text.image) {
-                    if (typeof text.image === 'string' && text.image.startsWith('http')) {
-                        embed.setImage(text.image);
-                    } else {
-                        console.warn("L'URL de l'image n'est pas valide:", text.image);
-                    }
-                }
-                if (text.thumbnail) {
-                    if (typeof text.thumbnail === 'string' && text.thumbnail.startsWith('http')) {
-                        embed.setThumbnail(text.thumbnail);
-                    } else {
-                        console.warn("L'URL du thumbnail n'est pas valide:", text.thumbnail);
-                    }
-                }
-                if (text.author) embed.setAuthor(text.author, text.authorIcon || undefined);
-                if (text.url) embed.setURL(text.url);
-    
-                message.channel.send({ embeds: [embed] })
-                    .catch(err => console.error("Erreur lors de l'envoi de l'embed :", err));
+                discordAction.sendEmbed(message.channel, text);
+                break;
+            case 'createCategory':
+                discordAction.createCategory(message, text);
+                break;
+            case 'deleteCategory':
+                discordAction.deleteCategory(message, text);
+                break;
+            case 'createChannel':
+                discordAction.createChannel(message, text);
+                break;
+            case 'deleteChannel':
+                discordAction.deleteChannel(message, text);
                 break;
         }
     }
@@ -226,7 +223,7 @@ class DiscordBot {
                     if (value && typeof value === 'object' && prop in value) {
                         value = value[prop];
                     } else {
-                        return match; // Placeholder remains if property is missing
+                        return match;
                     }
                 }
                 return value !== undefined ? value : match;
@@ -234,8 +231,22 @@ class DiscordBot {
         };
     
         if (typeof data === 'string') {
-            const withDynamicPlaceholders = dynamicReplace(data);
-            return withDynamicPlaceholders.replace(/{{(\w+)}}/g, (match, key) => args[key] || match);
+            let withDynamicPlaceholders = dynamicReplace(data);
+            withDynamicPlaceholders = withDynamicPlaceholders.replace(/\\n/g, '\n').replace(/\\n\\n/g, '\n\n')
+
+            return withDynamicPlaceholders.replace(/{{(\w+(\.\w+)*)}}/g, (match, key) => {
+                const keys = key.split('.');
+                let value = args[keys[0]];
+            
+                for (let i = 1; i < keys.length; i++) {
+                    if (value && typeof value === 'object' && keys[i] in value) {
+                        value = value[keys[i]];
+                    } else {
+                        return match;
+                    }
+                }
+                return value !== undefined ? value : match;
+            });
         } else if (Array.isArray(data)) {
             return data.map(item => this.injectPlaceholders(item, args, message, interaction));
         } else if (typeof data === 'object' && data !== null) {
@@ -259,7 +270,7 @@ class DiscordBot {
             return interaction.reply({ content: "Cette commande n'existe pas.", ephemeral: true });
         }
 
-        if (command.permissions !== 'Aucune' && !interaction.member.permissions.has(command.permissions.split(', '))) {
+        if (command.permissions !== 'NoPermission' && !command.permissions.every(permission => interaction.member.permissions.has(permission))) {
             return interaction.reply({ content: "Vous n'avez pas la permission d'exécuter cette commande.", ephemeral: true });
         }
 
@@ -298,7 +309,7 @@ class DiscordBot {
 
     async registerSlashCommands(client, guildId, commands) {
         if (!client.user) {
-            console.error("Le client n'est pas prêt ou l'utilisateur n'est pas défini.");
+            logger.error("Le client n'est pas prêt ou l'utilisateur n'est pas défini");
             return;
         }
 
@@ -347,26 +358,25 @@ class DiscordBot {
         }).filter(Boolean);
 
         if (commandData.length === 0) {
-            console.log('Aucune commande valide à enregistrer.');
+            logger.info('Aucune commande valide à enregistrer');
             return;
         }
 
         const rest = new REST().setToken(client.token);
 
-        await rest.put(Routes.applicationGuildCommands(client.user.id, guildId), { body: [] })
-            .then(() => console.log('Successfully deleted all guild commands.'))
-            .catch(console.error);
-
+        // await rest.put(Routes.applicationGuildCommands(client.user.id, guildId), { body: [] })
+        //     .then(() => console.log('Successfully deleted all guild commands.'))
+        //     .catch(console.error);
         try {
-            console.log(`Started refreshing ${commands.length} application (/) commands.`);
+            logger.info("Démarrage de l'actualisation des commandes de l'application (/)");
             const data = await rest.put(
                 Routes.applicationGuildCommands(client.user.id, guildId),
                 { body: commandData },
             );
 
-            console.log(`Successfully reloaded ${data.length} application (/) commands.`);
+            logger.info(`Rechargement réussi des ${data.length} commandes de l'application ${data.length} (/)`);
         } catch (error) {
-            console.error(error);
+            logger.error(error);
         }
     }
 }

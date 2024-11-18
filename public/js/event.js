@@ -1,9 +1,10 @@
 let isEditMode = false;
 $('.type').val('guildCreate');
 let currentNumberEventId;
+let currentEventId;
 
 async function loadEvents() {
-    const events = await window.api.loadComponent("events");
+    const events = await window.api.loadComponent({ name: "events", project: true });
     const eventsContainer = $('#events-container');
     eventsContainer.empty();
 
@@ -35,7 +36,6 @@ loadEvents();
 window.apiReceive.createdAction((event, data) => {
     if(data.isEditMode == true) {
         const actionListBody = $('#action-list tbody')[0];
-        console.log(data)
         const rowToEdit = $(actionListBody).find(`tr[action-id="${data.id}"]`);
 
         if (rowToEdit.length > 0) {
@@ -127,10 +127,9 @@ function addEvent() {
 
     if (eventName && eventType && actions.length > 0) {
         if(isEditMode) {
-            const events = { id: currentNumberEventId, eventName, eventType, actions };
+            const events = { id: currentEventId, eventName, eventType, actions };
             window.api.actionComponent({ action: "edit", component: "events", events })
             .then((response) => {
-                console.log(response)
                 if(response.success) {
                     showNotification("Évènement modifié avec succès !");
                 } else {
@@ -141,7 +140,6 @@ function addEvent() {
             const events = { id: currentNumberEventId, eventName, eventType, actions };
             window.api.actionComponent({ action: "save", component: "events", events })            
             .then((response) => {
-                console.log(response)
                 if(response.success) {
                     showNotification("Évènement crée avec succès !");
                 } else {
@@ -159,7 +157,7 @@ function addEvent() {
 
 function editEvent(evt, eventId) {
     $('.event-name').val(evt.eventName);
-    $('.type').val(evt.eventType)
+    $('.type').val(evt.eventType);
 
     $('#action-list tbody').empty();
     evt.actions.forEach(action => {
@@ -202,7 +200,6 @@ function editEvent(evt, eventId) {
 function deleteEvent() {
     window.api.actionComponent({ action: "delete", component: "events", id: currentEventId })
     .then((response) => {
-        console.log(response)
         if(response.success) {
             showNotification("Évènement supprimé avec succès !");
         } else {

@@ -1,5 +1,6 @@
 /* INDEX / EVENT */
 body.page-index,
+body.page-action,
 body.page-event,
 body.page-bot,
 body.page-variable {
@@ -206,10 +207,9 @@ button:hover {
     background-color: #555;
 }
 
-.category {
+.dropdown .category {
     font-weight: bold;
     color: #777 !important;
-    padding: 5px 0;
     pointer-events: none;
 }
 
@@ -219,11 +219,12 @@ button:hover {
     font-weight: bold;
     pointer-events: none;
 }
+
 /* INDEX */
 
 /* SPLASH */
 body.page-splash,
-html.page-splash {
+body.page-input {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -267,7 +268,7 @@ html.page-splash {
     cursor: pointer;
     -webkit-app-region: no-drag;
     width: 40px;
-    padding: 5px; 
+    padding: 5px;
 }
 
 .splash-container {
@@ -344,6 +345,257 @@ html.page-splash {
 }
 /* SPLASH */
 
+/* INPUT */
+body.page-input {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin: 0;
+    background-color: #2a2a2a;
+    color: #ffffff;
+    font-family: Arial, sans-serif;
+    overflow: hidden;
+    user-select: none;
+}
+
+body.page-input .title-bar {
+    width: 100%;
+    height: 30px;
+    background-color: #444;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    position: fixed;
+    top: 0;
+    left: 0;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+body.page-input .close-btn {
+    background-color: transparent;
+    border: none;
+    color: #76c7c0;
+    font-size: 18px;
+    cursor: pointer;
+    width: 40px;
+    height: 30px;
+}
+
+body.page-input .content {
+    margin-top: 20px;
+    width: 90%;
+    max-width: 550px;
+    text-align: center;
+}
+
+body.page-input h2 {
+    margin-bottom: 20px;
+    font-size: 16px;
+    color: #ffffff;
+}
+
+#formsContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+}
+
+.form-label {
+    font-size: 14px;
+    color: #cccccc;
+    text-align: left;
+    width: 100%;
+}
+/* INPUT */
+
+/* ACTION */
+body.page-action {
+    height: 100vh;
+}
+
+#command-list-section,
+#event-list-section {
+    width: 20%;
+    border-right: 1px solid #333;
+    padding: 10px;
+    height: auto;
+    overflow-y: auto;
+    background-color: #2a2a2a;
+    box-sizing: border-box;
+    overflow-y: auto;
+}
+
+@media (max-width: 1200px) {
+
+    #command-list-section,
+    #event-list-section {
+        width: 30%;
+    }
+}
+
+#form-section {
+    width: 82%;
+    padding: 20px;
+    background-color: #2a2a2a;
+    border-left: 1px solid #333;
+    overflow-y: auto;
+    height: auto;
+}
+
+#form-section h3 {
+    text-align: center;
+}
+
+.group {
+    margin-bottom: 15px;
+    cursor: pointer;
+    padding: 10px;
+    background-color: #333;
+    border-radius: 5px;
+    text-align: center;
+}
+
+.actions {
+    display: none;
+    margin-top: 10px;
+    padding-left: 15px;
+}
+
+.embed-group {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+.embed-group div {
+    display: flex;
+    flex-direction: column;
+}
+
+textarea {
+    position: relative;
+    width: 100%;
+    height: 150px;
+    border: none;
+    background: #3a3a3a;
+    color: #f0f0f0;
+    caret-color: #f0f0f0;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    padding: 10px;
+    resize: none;
+    box-sizing: border-box;
+    border: 1px solid #555;
+    border-radius: 5px;
+}
+
+.full-width {
+    grid-column: span 2;
+}
+
+.color-input {
+    width: calc(100% - 16px);
+    height: 40px;
+    display: block;
+    border: 1px solid #555;
+    border-radius: 5px;
+    background-color: #3a3a3a;
+    cursor: pointer;
+}
+
+.dropdown-stylish {
+    position: absolute;
+    background: #2a2a2a;
+    border: 1px solid #555;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    width: 320px;
+    max-height: 300px;
+    overflow-y: auto;
+    display: none;
+    padding: 10px;
+}
+
+.dropdown-stylish .category h4 {
+    color: #aaa;
+    font-size: 14px;
+    margin: 10px 0 5px;
+    border-bottom: 1px solid #444;
+    padding-bottom: 5px;
+}
+
+.dropdown-stylish ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.dropdown-stylish li {
+    list-style: none;
+    padding: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    border-radius: 4px;
+    background-color: #2a2a2a;
+    color: #ccc;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.dropdown-stylish li:hover {
+    background-color: #444;
+}
+
+.edit-mode-indicator {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: #3a3a3a;
+    color: white;
+    padding: 15px;
+    font-size: 16px;
+    text-align: center;
+    z-index: 1000;
+    box-shadow: 0 -4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.edit-mode-indicator p {
+    margin: 0;
+}
+
+.edit-mode-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.edit-mode-text {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.edit-mode-description {
+    font-size: 12px;
+    color: #333;
+    margin-top: 5px;
+    font-style: italic;
+}
+
+/* ACTION */
+
 /* BOT */
 .bot-container {
     display: flex;
@@ -400,6 +652,149 @@ body.page-bot h3 {
 }
 /* VARIABLE */
 
+/* ABOUT */
+
+body.page-about {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    font-family: Arial, sans-serif;
+    background-color: #1a1a1a;
+    color: #f0f0f0;
+    height: 100vh;
+    user-select: none;
+}
+
+body.page-about .content {
+    display: flex;
+    margin-top: 60px;
+    height: calc(100% - 60px);
+}
+
+aside {
+    background-color: #2a2a2a;
+    padding: 10px;
+    border-right: 1px solid #333;
+    height: 100%;
+    position: fixed;
+    top: 39px;
+    overflow-y: auto;
+    width: 200px;
+}
+
+aside a {
+    color: #f0f0f0;
+    margin-bottom: 10px;
+    text-decoration: none;
+    display: block;
+    padding: 8px;
+    border-radius: 5px;
+}
+
+aside a:hover {
+    background-color: #444;
+}
+
+.main {
+    margin-left: 220px;
+    padding: 20px;
+    width: calc(100% - 220px);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    /* Pour éviter un grand espace en haut */
+}
+
+.box {
+    background-color: #2a2a2a;
+    /* Même couleur que aside */
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    width: 60%;
+    /* Réduit la largeur */
+    max-width: 900px;
+    /* Limite la largeur max */
+    height: auto;
+    /* Hauteur automatique selon le contenu */
+    min-height: 300px;
+    /* Donne une hauteur minimale */
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    /* Centrer tout le texte */
+}
+
+body.page-about h2 {
+    color: #ccc;
+    margin-top: 0;
+}
+
+a.button-link {
+    background-color: #444;
+    padding: 10px;
+    color: #f0f0f0;
+    text-decoration: none;
+    border-radius: 5px;
+    display: inline-block;
+    margin-top: 10px;
+}
+
+a.button-link:hover {
+    background-color: #555;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: 0.4s;
+    border-radius: 24px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    transition: 0.4s;
+    border-radius: 50%;
+}
+
+input:checked+.slider {
+    background-color: #4caf50;
+}
+
+input:checked+.slider:before {
+    transform: translateX(26px);
+}
+/* ABOUT */
+
 /* NAVBAR */
 nav {
     background-color: #2a2a2a;
@@ -423,6 +818,7 @@ nav a {
 nav a:hover {
     background-color: #444;
 }
+
 /* NAVBAR */
 
 /* Notification */
@@ -442,6 +838,7 @@ nav a:hover {
 .notification.error {
     background-color: #f44336;
 }
+
 /* Notification */
 
 /* ScrollBar */
@@ -463,4 +860,5 @@ nav a:hover {
 ::-webkit-scrollbar-thumb:hover {
     background-color: #555;
 }
+
 /* ScrollBar */

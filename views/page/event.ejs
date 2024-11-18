@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../../public/css/styles.css">
+    <title>AzMaker</title>
+</head>
+
+<body class="page-event">
+    <%- include('../partials/navbar') %>
+    <div id="event-list">
+        <h3>Évènements Créées</h3>
+        <div id="events-container"></div>
+    </div>
+    <div id="event-details">
+        <h3>Détails de l'évènement</h3>
+        <input type="text" class="event-name" placeholder="Nom de l'évènement" />
+        <select class="type">
+            <option value="" disabled selected>Événements de serveur</option>
+            <option value="guildCreate">Déclenché lorsqu'un bot rejoint un serveur</option>
+            <option value="guildDelete">Déclenché lorsqu'un bot quitte un serveur</option>
+            <option value="guildUpdate">Déclenché lorsqu'un serveur est mis à jour</option>
+            <option value="" disabled>───────────────</option>
+            <option value="" disabled selected>Événements de membre</option>
+            <option value="guildMemberAdd">Déclenché lorsqu'un membre rejoint le serveur</option>
+            <option value="guildMemberRemove">Déclenché lorsqu'un membre quitte le serveur</option>
+            <option value="guildMemberUpdate">Déclenché lorsqu'un membre est mis à jour (rôle, pseudonyme, etc.)
+            </option>
+            <option value="" disabled>───────────────</option>
+            <option value="" disabled selected>Événements de canal</option>
+            <option value="channelCreate">Déclenché lorsqu'un canal est créé</option>
+            <option value="channelUpdate">Déclenché lorsqu'un canal est mis à jour</option>
+            <option value="channelDelete">Déclenché lorsqu'un canal est supprimé</option>
+            <option value="channelPinsUpdate">Déclenché lorsqu'un message épinglé est mis à jour</option>
+            <option value="" disabled>───────────────</option>
+            <option value="" disabled selected>Événements de message</option>
+            <option value="messageCreate">Déclenché lorsqu'un message est envoyé</option>
+            <option value="messageUpdate">Déclenché lorsqu'un message est modifié</option>
+            <option value="messageDelete">Déclenché lorsqu'un message est supprimé</option>
+            <option value="" disabled>───────────────</option>
+            <option value="" disabled selected>Événements de Rôle</option>
+            <option value="roleCreate">Émis lorsqu'un rôle est créé</option>
+            <option value="roleUpdate">Émis lorsqu'un rôle est mis à jour</option>
+            <option value="roleDelete">Émis lorsqu'un rôle est supprimé</option>
+            <option value="" disabled>───────────────</option>
+            <option value="" disabled selected>Événements vocaux</option>
+            <option value="voiceStateUpdate">Déclenché lorsqu'un utilisateur rejoint ou quitte un salon vocal ou change
+                de statut (muet, sourd, etc.)</option>
+            <option value="voiceServerUpdate">Émis lorsque le serveur vocal change (par exemple, lors d'une déconnexion
+                ou d'un changement de région)</option>
+        </select>
+
+        <h4>Actions</h4>
+        <table id="action-list">
+            <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th>Action</th>
+                    <th>Détails</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+        <div class="event-buttons">
+            <button onclick="openActionWindow()" class="addActionButton">Ajouter une Action</button>
+            <button onclick="addEvent()" class="addEventButton">Ajouter l'évènement</button>
+        </div>
+    </div>
+
+    <%- include('../partials/footer') %>
+
+    <script src="../../public/js/modules/jquery-3.6.0.min.js"></script>
+    <script src="../../public/js/modules/duplicate.js"></script>
+    <script src="../../public/js/event.js"></script>
+</body>
+
+</html>

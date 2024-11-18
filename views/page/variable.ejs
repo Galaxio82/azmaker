@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../../public/css/styles.css">
+    <title>Variables</title>
+</head>
+
+<body class="page-variable">
+    <%- include('../partials/navbar') %>
+    <div id="variable-list">
+        <h3>Variables et Tableaux</h3>
+        <div id="variables-container"></div>
+    </div>
+
+    <div id="variable-details">
+        <h3>Gérer les Variables</h3>
+        <input type="text" id="variable-key" placeholder="Nom de la variable ou du tableau" />
+        <input type="text" id="variable-value" placeholder="Valeur de la variable (si applicable)" />
+        <button onclick="addOrUpdateVariable()">Ajouter ou Mettre à Jour</button>
+        <button onclick="deleteVariable()">Supprimer</button>
+
+        <h4>Valeurs Imbriquées</h4>
+        <input type="text" id="nested-path" placeholder="Chemin imbriqué (ex : userData.12345.name)" />
+        <input type="text" id="nested-value" placeholder="Nouvelle valeur pour ce chemin" />
+        <button onclick="setNestedValue()">Définir ou Mettre à Jour</button>
+        <button onclick="deleteNestedValue()">Supprimer la Valeur Imbriquée</button>
+    </div>
+    <%- include('../partials/footer') %>
+    <script src="../../public/js/variable.js"></script>
+    <script>
+        const variables = {};
+
+        function addOrUpdateVariable() {
+            const key = document.getElementById('variable-key').value;
+            const value = document.getElementById('variable-value').value;
+            if (!key) return showNotification('Veuillez entrer un nom de variable', true);
+
+            variables[key] = value || null;
+            refreshVariableList();
+            showNotification(`Variable "${key}" ajoutée ou mise à jour`);
+        }
+
+        function deleteVariable() {
+            const key = document.getElementById('variable-key').value;
+            if (!key || !(key in variables)) return showNotification('La variable n’existe pas', true);
+            delete variables[key];
+            refreshVariableList();
+            showNotification(`Variable "${key}" supprimée`);
+        }
+
+        function setNestedValue() {
+            const path = document.getElementById('nested-path').value;
+            const value = document.getElementById('nested-value').value;
+
+            if (!path) return showNotification('Veuillez entrer un chemin', true);
+
+            const keys = path.split('.');
+            let current = variables;
+
+            keys.forEach((key, index) => {
+                if (index === keys.length - 1) {
+                    current[key] = value;
+                } else {
+                    if (!current[key]) current[key] = {};
+                    current = current[key];
+                }
+            });
+
+            refreshVariableList();
+            console.log(variables)
+            showNotification(`Valeur imbriquée définie pour "${path}".`);
+        }
+
+        function deleteNestedValue() {
+            const path = document.getElementById('nested-path').value;
+            if (!path) return showNotification('Veuillez entrer un chemin', true);
+
+            const keys = path.split('.');
+            let current = variables;
+
+            for (let i = 0; i < keys.length - 1; i++) {
+                if (!current[keys[i]]) return showNotification(`Chemin "${path}" non trouvé`, true);
+                current = current[keys[i]];
+            }
+
+            const lastKey = keys[keys.length - 1];
+            if (!current[lastKey]) return showNotification(`Clé "${lastKey}" non trouvé`, true);
+            delete current[lastKey];
+
+            refreshVariableList();
+            showNotification(`Valeur imbriquée supprimée pour "${path}"`);
+        }
+
+        function refreshVariableList() {
+            const container = document.getElementById('variables-container');
+            container.innerHTML = '';
+
+            Object.keys(variables).forEach(key => {
+                const value = JSON.stringify(variables[key]);
+
+                // Ajouter à la liste de gauche
+                const div = document.createElement('div');
+                div.textContent = `${key}: ${value}`;
+                div.className = 'variable-item';
+                container.appendChild(div);
+            });
+        }
+
+        function showNotification(message, isError = false) {
+            const notification = document.getElementById('notification');
+            notification.innerText = message;
+            notification.className = isError ? 'notification error' : 'notification';
+            notification.style.display = 'block';
+
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+
+        function navigateTo(page) {
+            window.api.navigateTo(page);
+        }
+    </script>
+</body>
+
+</html>

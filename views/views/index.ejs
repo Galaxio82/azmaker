@@ -1,0 +1,110 @@
+<%- include('partials/header') %>
+
+<body class="page-index">
+    <%- include('partials/navbar') %>
+    <div id="command-list">
+        <h3>Commandes Créées</h3>
+        <div id="commands-container"></div>
+    </div>
+    <div id="command-details">
+        <h3>Détails de la Commande</h3>
+        <input type="text" class="command-name" placeholder="Nom de la commande" />
+        <select class="types" id="command-type" onchange="updateCommandInputs()">
+            <option value="PREFIX">Commande Prefix</option>
+            <option value="SLASH">Commande Slash</option>
+        </select>
+        <input type="text" class="trigger" id="command-input" placeholder="Déclencheur = '(prefix)ping'" />
+        <div class="permissions-container">
+            <div class="custom-select-container" onclick="toggleDropdown()">
+                <div id="selected-permissions-container" class="selected-permissions" data-placeholder="Sélectionnez des permissions"></div>
+            </div>
+            <div class="dropdown" id="dropdown">
+                <div onclick="selectPermission('Aucune', 'NoPermission')">Aucune</div>
+                <div class="category">Permissions de base</div>
+                <div onclick="selectPermission('Créer une invitation instantanée', 'CreateInstantInvite')">Créer une
+                    invitation instantanée</div>
+                <div onclick="selectPermission('Expulser des membres', 'KickMembers')">Expulser des membres</div>
+                <div onclick="selectPermission('Bannir des membres', 'BanMembers')">Bannir des membres</div>
+                <div onclick="selectPermission('Administrateur', 'Administrator')">Administrateur</div>
+                <div onclick="selectPermission('Gérer les canaux', 'ManageChannels')">Gérer les canaux</div>
+                <div onclick="selectPermission('Gérer le serveur', 'ManageServer')">Gérer le serveur</div>
+                <div onclick="selectPermission('Ajouter des réactions', 'AddReactions')">Ajouter des réactions</div>
+                <div onclick="selectPermission('Voir le journal d\'audit', 'ViewAuditLog')">Voir le journal d'audit
+                </div>
+                <div class="separator">──────────────────────────────</div>
+                <div class="category">Permissions de messages</div>
+                <div onclick="selectPermission('Envoyer des messages', 'SendMessages')">Envoyer des messages</div>
+                <div onclick="selectPermission('Envoyer des messages TTS', 'SendTTSMessages')">Envoyer des messages TTS
+                </div>
+                <div onclick="selectPermission('Gérer les messages', 'ManageMessages')">Gérer les messages</div>
+                <div onclick="selectPermission('Intégrer des liens', 'EmbedLinks')">Intégrer des liens</div>
+                <div onclick="selectPermission('Joindre des fichiers', 'AttachFiles')">Joindre des fichiers</div>
+                <div onclick="selectPermission('Lire l\'historique des messages', 'ReadMessageHistory')">Lire
+                    l'historique des messages</div>
+                <div onclick="selectPermission('Mentionner @everyone, @here, et tous les rôles', 'MentionEveryone')">
+                    Mentionner @everyone, @here, et tous les rôles</div>
+                <div onclick="selectPermission('Utiliser des émojis externes', 'UseExternalEmojis')">Utiliser des émojis
+                    externes</div>
+                <div class="separator">──────────────────────────────</div>
+                <div class="category">Permissions de voix</div>
+                <div onclick="selectPermission('Se connecter', 'Connect')">Se connecter</div>
+                <div onclick="selectPermission('Parler', 'Speak')">Parler</div>
+                <div onclick="selectPermission('Couper des membres', 'MuteMembers')">Couper des membres</div>
+                <div onclick="selectPermission('Rendre sourd des membres', 'DeafenMembers')">Rendre sourd des membres
+                </div>
+                <div onclick="selectPermission('Déplacer des membres', 'MoveMembers')">Déplacer des membres</div>
+                <div onclick="selectPermission('Utiliser la détection de voix', 'UseVoiceDetection')">Utiliser la
+                    détection de voix</div>
+                <div class="separator">──────────────────────────────</div>
+                <div class="category">Permissions de gestion des rôles et des utilisateurs</div>
+                <div onclick="selectPermission('Gérer les rôles', 'ManageRoles')">Gérer les rôles</div>
+                <div onclick="selectPermission('Gérer les webhooks', 'ManageWebhooks')">Gérer les webhooks</div>
+                <div onclick="selectPermission('Gérer les émojis', 'ManageEmojis')">Gérer les émojis</div>
+                <div class="separator">──────────────────────────────</div>
+                <div class="category">Permissions de gestion des intégrations</div>
+                <div onclick="selectPermission('Utiliser des commandes d\'application', 'UseApplicationCommands')">
+                    Utiliser des commandes d'application</div>
+                <div onclick="selectPermission('Demander à parler', 'RequestToSpeak')">Demander à parler</div>
+                <div onclick="selectPermission('Gérer les événements', 'ManageEvents')">Gérer les événements</div>
+                <div onclick="selectPermission('Gérer les fils de discussion', 'ManageThreads')">Gérer les fils de
+                    discussion</div>
+                <div class="separator">──────────────────────────────</div>
+                <div class="category">Permissions de communauté</div>
+                <div onclick="selectPermission('Créer des fils de discussion publics', 'CreatePublicThreads')">Créer des
+                    fils de discussion publics</div>
+                <div onclick="selectPermission('Créer des fils de discussion privés', 'CreatePrivateThreads')">Créer des
+                    fils de discussion privés</div>
+            </div>
+        </div>
+        <h4>Arguments</h4>
+        <div id="argument-section">
+            <div id="argument-list"></div>
+            <button onclick="addArgument()" style="margin-top: 10px;">Ajouter un Argument</button>
+        </div>
+        <h4>Actions</h4>
+        <table id="action-list">
+            <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th>Action</th>
+                    <th>Détails</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+        <div class="command-buttons">
+            <button onclick="openActionWindow()" class="addActionButton">Ajouter une Action</button>
+            <button onclick="addCommand()" class="addCommandButton">Ajouter la Commande</button>
+        </div>
+    </div>
+
+    <%- include('partials/footer') %>
+
+    <script src="public://js/modules/jquery-3.6.0.min.js"></script>
+    <script src="public://js/modules/duplicate.js"></script>
+    <script src="public://js/index.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,26 @@
+<%- include('../partials/header') %>
+
+<body class="page-variable">
+
+    <%- include('../partials/navbar') %>
+
+        <div id="variable-list">
+            <h3>Variables et Tableaux</h3>
+            <div id="variables-container"></div>
+        </div>
+
+        <div id="variable-details">
+            <h3>Gérer les Variables</h3>
+            <input type="text" id="variable-key" placeholder="Nom de la variable ou du tableau" />
+            <input type="text" id="variable-value" placeholder="Valeur de la variable (si applicable)" />
+            <button onclick="addVariable()">Ajouter la Variable</button>
+            <button onclick="deleteVariable()">Supprimer</button>
+        </div>
+
+        <%- include('../partials/footer') %>
+
+        <script src="public://js/modules/jquery-3.6.0.min.js"></script>
+        <script src="public://js/modules/duplicate.js"></script>
+        <script src="public://js/variable.js"></script>
+</body>
+</html>
